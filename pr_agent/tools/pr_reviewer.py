@@ -80,7 +80,7 @@ class PRReviewer:
             None
         """
         is_incremental = False
-        if args and len(args) >= 1:
+        if args:
             arg = args[0]
             if arg == "-i":
                 is_incremental = True
@@ -231,8 +231,9 @@ class PRReviewer:
                 continue
 
             if self.git_provider.is_supported("create_inline_comment"):
-                comment = self.git_provider.create_inline_comment(content, relevant_file, relevant_line_in_file)
-                if comment:
+                if comment := self.git_provider.create_inline_comment(
+                    content, relevant_file, relevant_line_in_file
+                ):
                     comments.append(comment)
             else:
                 self.git_provider.publish_inline_comment(content, relevant_file, relevant_line_in_file)

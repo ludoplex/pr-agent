@@ -51,7 +51,7 @@ class GithubProvider(GitProvider):
         if self.previous_review:
             self.incremental.commits_range = self.get_commit_range()
             # Get all files changed during the commit range
-            self.file_set = dict()
+            self.file_set = {}
             for commit in self.incremental.commits_range:
                 if commit.commit.message.startswith(f"Merge branch '{self._get_repo().default_branch}'"):
                     logging.info(f"Skipping merge commit {commit.commit.message}")
@@ -222,8 +222,7 @@ class GithubProvider(GitProvider):
         return self.pr.title
 
     def get_languages(self):
-        languages = self._get_repo().get_languages()
-        return languages
+        return self._get_repo().get_languages()
 
     def get_pr_branch(self):
         return self.pr.head.ref
@@ -245,16 +244,16 @@ class GithubProvider(GitProvider):
         if deployment_type != 'user':
             raise ValueError("Deployment mode must be set to 'user' to get notifications")
 
-        notifications = self.github_client.get_user().get_notifications(since=since)
-        return notifications
+        return self.github_client.get_user().get_notifications(since=since)
 
     def get_issue_comments(self):
         return self.pr.get_issue_comments()
 
     def get_repo_settings(self):
         try:
-            contents = self.repo_obj.get_contents(".pr_agent.toml", ref=self.pr.head.sha).decoded_content
-            return contents
+            return self.repo_obj.get_contents(
+                ".pr_agent.toml", ref=self.pr.head.sha
+            ).decoded_content
         except Exception:
             return ""
 
@@ -312,13 +311,13 @@ class GithubProvider(GitProvider):
             return Github(auth=Auth.Token(token))
 
     def _get_repo(self):
-        if hasattr(self, 'repo_obj') and \
-                hasattr(self.repo_obj, 'full_name') and \
-                self.repo_obj.full_name == self.repo:
-            return self.repo_obj
-        else:
+        if (
+            not hasattr(self, 'repo_obj')
+            or not hasattr(self.repo_obj, 'full_name')
+            or self.repo_obj.full_name != self.repo
+        ):
             self.repo_obj = self.github_client.get_repo(self.repo)
-            return self.repo_obj
+        return self.repo_obj
 
 
     def _get_pr(self):

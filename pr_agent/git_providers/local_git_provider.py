@@ -56,9 +56,12 @@ class LocalGitProvider(GitProvider):
             raise KeyError(f'Branch: {self.target_branch_name} does not exist')
 
     def is_supported(self, capability: str) -> bool:
-        if capability in ['get_issue_comments', 'create_inline_comment', 'publish_inline_comments', 'get_labels']:
-            return False
-        return True
+        return capability not in {
+            'get_issue_comments',
+            'create_inline_comment',
+            'publish_inline_comments',
+            'get_labels',
+        }
 
     def get_diff_files(self) -> list[FilePatchInfo]:
         diffs = self.repo.head.commit.diff(
@@ -103,9 +106,7 @@ class LocalGitProvider(GitProvider):
             self.repo.merge_base(self.repo.head, self.repo.branches[self.target_branch_name]),
             R=True
         )
-        # Get the list of changed files
-        diff_files = [item.a_path for item in diff_index]
-        return diff_files
+        return [item.a_path for item in diff_index]
 
     def publish_description(self, pr_title: str, pr_body: str):
         with open(self.description_path, "w") as file:
@@ -149,8 +150,7 @@ class LocalGitProvider(GitProvider):
         lang_count = Counter(ext.lstrip('.') for filepath in filepaths for ext in [filepath.suffix.lower()])
         # Convert counts to percentages
         total_files = len(filepaths)
-        lang_percentage = {lang: count / total_files * 100 for lang, count in lang_count.items()}
-        return lang_percentage
+        return {lang: count / total_files * 100 for lang, count in lang_count.items()}
 
     def get_pr_branch(self):
         return self.repo.head
@@ -159,7 +159,7 @@ class LocalGitProvider(GitProvider):
         return -1  # Not used anywhere for the local provider, but required by the interface
 
     def get_pr_description(self):
-        commits_diff = list(self.repo.iter_commits(self.target_branch_name + '..HEAD'))
+        commits_diff = list(self.repo.iter_commits(f'{self.target_branch_name}..HEAD'))
         # Get the commit messages and concatenate
         commit_messages = " ".join([commit.message for commit in commits_diff])
         # TODO Handle the description better - maybe use gpt-3.5 summarisation here?

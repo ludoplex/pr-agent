@@ -48,18 +48,18 @@ async def run_action():
     if GITHUB_EVENT_NAME == "pull_request":
         action = event_payload.get("action")
         if action in ["opened", "reopened"]:
-            pr_url = event_payload.get("pull_request", {}).get("url")
-            if pr_url:
+            if pr_url := event_payload.get("pull_request", {}).get("url"):
                 await PRReviewer(pr_url).run()
 
-    # Handle issue comment event
     elif GITHUB_EVENT_NAME == "issue_comment":
         action = event_payload.get("action")
         if action in ["created", "edited"]:
-            comment_body = event_payload.get("comment", {}).get("body")
-            if comment_body:
-                pr_url = event_payload.get("issue", {}).get("pull_request", {}).get("url")
-                if pr_url:
+            if comment_body := event_payload.get("comment", {}).get("body"):
+                if (
+                    pr_url := event_payload.get("issue", {})
+                    .get("pull_request", {})
+                    .get("url")
+                ):
                     body = comment_body.strip().lower()
                     await PRAgent().handle_request(pr_url, body)
 

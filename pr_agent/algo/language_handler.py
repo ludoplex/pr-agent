@@ -52,10 +52,9 @@ def sort_files_by_main_languages(languages: Dict, files: list):
             extension_str = f".{file.filename.split('.')[-1]}"
             if extension_str in extensions:
                 tmp.append(file)
-            else:
-                if (file.filename not in rest_files) and (extension_str not in main_extensions_flat):
-                    rest_files[file.filename] = file
-        if len(tmp) > 0:
+            elif (file.filename not in rest_files) and (extension_str not in main_extensions_flat):
+                rest_files[file.filename] = file
+        if tmp:
             files_sorted.append({"language": lang, "files": tmp})
     files_sorted.append({"language": "Other", "files": list(rest_files.values())})
     return files_sorted
