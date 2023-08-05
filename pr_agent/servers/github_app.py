@@ -49,8 +49,9 @@ async def get_body(request):
         raise HTTPException(status_code=400, detail="Error parsing request body") from e
     body_bytes = await request.body()
     signature_header = request.headers.get('x-hub-signature-256', None)
-    webhook_secret = getattr(get_settings().github, 'webhook_secret', None)
-    if webhook_secret:
+    if webhook_secret := getattr(
+        get_settings().github, 'webhook_secret', None
+    ):
         verify_signature(body_bytes, webhook_secret, signature_header)
     return body
 
@@ -86,11 +87,11 @@ async def handle_request(body: Dict[str, Any]):
         pull_request = body.get("pull_request")
         if not pull_request:
             return {}
-        api_url = pull_request.get("url")
-        if not api_url:
-            return {}
-        await agent.handle_request(api_url, "/review")
+        if api_url := pull_request.get("url"):
+            await agent.handle_request(api_url, "/review")
 
+        else:
+            return {}
     return {}
 
 

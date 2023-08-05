@@ -26,9 +26,12 @@ class BitbucketProvider:
             self.set_pr(pr_url)
 
     def is_supported(self, capability: str) -> bool:
-        if capability in ['get_issue_comments', 'create_inline_comment', 'publish_inline_comments', 'get_labels']:
-            return False
-        return True
+        return capability not in {
+            'get_issue_comments',
+            'create_inline_comment',
+            'publish_inline_comments',
+            'get_labels',
+        }
 
     def set_pr(self, pr_url: str):
         self.workspace_slug, self.repo_slug, self.pr_num = self._parse_pr_url(pr_url)
@@ -39,8 +42,12 @@ class BitbucketProvider:
 
     def get_diff_files(self) -> list[FilePatchInfo]:
         diffs = self.pr.diffstat()
-        diff_split = ['diff --git%s' % x for x in self.pr.diff().split('diff --git') if x.strip()]
-        
+        diff_split = [
+            f'diff --git{x}'
+            for x in self.pr.diff().split('diff --git')
+            if x.strip()
+        ]
+
         diff_files = []
         for index, diff in enumerate(diffs):
             original_file_content_str = self._get_pr_file_content(diff.old.get_data('links'))
@@ -50,8 +57,8 @@ class BitbucketProvider:
         return diff_files
 
     def publish_comment(self, pr_comment: str, is_temporary: bool = False):
-        comment = self.pr.comment(pr_comment)
         if is_temporary:
+            comment = self.pr.comment(pr_comment)
             self.temp_comments.append(comment['id'])
 
     def remove_initial_comment(self):
@@ -74,8 +81,7 @@ class BitbucketProvider:
         return self.pr.title
 
     def get_languages(self):
-        languages = {self._get_repo().get_data('language'): 0}
-        return languages
+        return {self._get_repo().get_data('language'): 0}
 
     def get_pr_branch(self):
         return self.pr.source_branch

@@ -83,11 +83,10 @@ def parse_code_suggestion(code_suggestions: dict) -> str:
                 code_str = f"```\n{code_value}\n```"
                 code_str_indented = textwrap.indent(code_str, '        ')
                 markdown_text += f"    - **{code_key}:**\n{code_str_indented}\n"
+        elif "relevant file" in sub_key.lower():
+            markdown_text += f"\n  - **{sub_key}:** {sub_value}\n"
         else:
-            if "relevant file" in sub_key.lower():
-                markdown_text += f"\n  - **{sub_key}:** {sub_value}\n"
-            else:
-                markdown_text += f"   **{sub_key}:** {sub_value}\n"
+            markdown_text += f"   **{sub_key}:** {sub_value}\n"
 
     markdown_text += "\n"
     return markdown_text
@@ -123,11 +122,7 @@ def try_fix_json(review, max_iter=10, code_suggestions=False):
         return fix_json_escape_char(review)
 
     data = {}
-    if code_suggestions:
-        closing_bracket = "]}"
-    else:
-        closing_bracket = "]}}"
-
+    closing_bracket = "]}" if code_suggestions else "]}}"
     if review.rfind("'Code suggestions': [") > 0 or review.rfind('"Code suggestions": [') > 0:
         last_code_suggestion_ind = [m.end() for m in re.finditer(r"\}\s*,", review)][-1] - 1
         valid_json = False

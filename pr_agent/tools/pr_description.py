@@ -146,17 +146,12 @@ class PRDescription:
 
         # Initialization
         markdown_text = pr_body = ""
-        pr_types = []
-
         # Iterate over the dictionary items and append the key and value to 'markdown_text' in a markdown format
         for key, value in data.items():
             markdown_text += f"## {key}\n\n"
             markdown_text += f"{value}\n\n"
 
-        # If the 'PR Type' key is present in the dictionary, split its value by comma and assign it to 'pr_types'
-        if 'PR Type' in data:
-            pr_types = data['PR Type'].split(',')
-
+        pr_types = data['PR Type'].split(',') if 'PR Type' in data else []
         # Assign the value of the 'PR Title' key to 'title' variable and remove it from the dictionary
         title = data.pop('PR Title')
 

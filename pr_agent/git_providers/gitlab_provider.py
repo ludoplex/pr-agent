@@ -37,9 +37,11 @@ class GitLabProvider(GitProvider):
         self.incremental = incremental
 
     def is_supported(self, capability: str) -> bool:
-        if capability in ['get_issue_comments', 'create_inline_comment', 'publish_inline_comments']:
-            return False
-        return True
+        return capability not in {
+            'get_issue_comments',
+            'create_inline_comment',
+            'publish_inline_comments',
+        }
 
     @property
     def pr(self):
@@ -105,8 +107,8 @@ class GitLabProvider(GitProvider):
             logging.exception(f"Could not update merge request {self.id_mr} description: {e}")
 
     def publish_comment(self, mr_comment: str, is_temporary: bool = False):
-        comment = self.mr.notes.create({'body': mr_comment})
         if is_temporary:
+            comment = self.mr.notes.create({'body': mr_comment})
             self.temp_comments.append(comment)
 
     def publish_inline_comment(self, body: str, relevant_file: str, relevant_line_in_file: str):
@@ -152,12 +154,14 @@ class GitLabProvider(GitProvider):
                 relevant_lines_end = suggestion['relevant_lines_end']
 
                 self.diff_files = self.diff_files if self.diff_files else self.get_diff_files()
-                target_file = None
-                for file in self.diff_files:
-                    if file.filename == relevant_file:
-                        if file.filename == relevant_file:
-                            target_file = file
-                            break
+                target_file = next(
+                    (
+                        file
+                        for file in self.diff_files
+                        if file.filename == relevant_file
+                    ),
+                    None,
+                )
                 range = relevant_lines_end - relevant_lines_start # no need to add 1
                 body = body.replace('```suggestion', f'```suggestion:-0+{range}')
                 lines = target_file.head_file.splitlines()
@@ -255,8 +259,9 @@ class GitLabProvider(GitProvider):
 
     def get_repo_settings(self):
         try:
-            contents = self.gl.projects.get(self.id_project).files.get(file_path='.pr_agent.toml', ref=self.mr.source_branch)
-            return contents
+            return self.gl.projects.get(self.id_project).files.get(
+                file_path='.pr_agent.toml', ref=self.mr.source_branch
+            )
         except Exception:
             return ""
 
@@ -279,15 +284,12 @@ class GitLabProvider(GitProvider):
 
         # Handle special delimiter (-)
         project_path = "/".join(path_parts[:mr_index])
-        if project_path.endswith('/-'):
-            project_path = project_path[:-2]
-
+        project_path = project_path.removesuffix('/-')
         # Return the path before 'merge_requests' and the ID
         return project_path, mr_id
 
     def _get_merge_request(self):
-        mr = self.gl.projects.get(self.id_project).mergerequests.get(self.id_mr)
-        return mr
+        return self.gl.projects.get(self.id_project).mergerequests.get(self.id_mr)
 
     def get_user_id(self):
         return None

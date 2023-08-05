@@ -43,8 +43,7 @@ class PRAgent:
             repo_settings_file = None
             try:
                 git_provider = get_git_provider()(pr_url)
-                repo_settings = git_provider.get_repo_settings()
-                if repo_settings:
+                if repo_settings := git_provider.get_repo_settings():
                     repo_settings_file = None
                     fd, repo_settings_file = tempfile.mkstemp(suffix='.toml')
                     os.write(fd, repo_settings)

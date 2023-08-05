@@ -109,7 +109,10 @@ class PRCodeSuggestions:
                 if new_code_snippet:
                     new_code_snippet = self.dedent_code(relevant_file, relevant_lines_start, new_code_snippet)
 
-                body = f"**Suggestion:** {content}\n```suggestion\n" + new_code_snippet + "\n```"
+                body = (
+                    f"**Suggestion:** {content}\n```suggestion\n{new_code_snippet}"
+                    + "\n```"
+                )
                 code_suggestions.append({'body': body, 'relevant_file': relevant_file,
                                          'relevant_lines_start': relevant_lines_start,
                                          'relevant_lines_end': relevant_lines_end})
@@ -122,13 +125,15 @@ class PRCodeSuggestions:
     def dedent_code(self, relevant_file, relevant_lines_start, new_code_snippet):
         try:  # dedent code snippet
             self.diff_files = self.git_provider.diff_files if self.git_provider.diff_files \
-                else self.git_provider.get_diff_files()
-            original_initial_line = None
-            for file in self.diff_files:
-                if file.filename.strip() == relevant_file:
-                    original_initial_line = file.head_file.splitlines()[relevant_lines_start - 1]
-                    break
-            if original_initial_line:
+                    else self.git_provider.get_diff_files()
+            if original_initial_line := next(
+                (
+                    file.head_file.splitlines()[relevant_lines_start - 1]
+                    for file in self.diff_files
+                    if file.filename.strip() == relevant_file
+                ),
+                None,
+            ):
                 suggested_initial_line = new_code_snippet.splitlines()[0]
                 original_initial_spaces = len(original_initial_line) - len(original_initial_line.lstrip())
                 suggested_initial_spaces = len(suggested_initial_line) - len(suggested_initial_line.lstrip())
